@@ -9,11 +9,17 @@ const cloudinary = require("cloudinary");
 
 // signUp controller>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 exports.registerUser = asyncWrapper(async (req, res) => {
-  const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+  const base64Data = req.body.avatar.replace(/^data:image\/jpeg;base64,/, '');
+   
+    // if (!isValidBase64(base64Data)) {
+    //   throw new Error("Invalid base64 data");
+    // }
+  const myCloud = await cloudinary.v2.uploader.upload(base64Data, {
     folder: "Avatar", // this folder cloudainry data base manage by us
     width: 150,
     crop: "scale",
   });
+  console.log("register cloud", myCloud)
 
 
 
@@ -28,9 +34,19 @@ exports.registerUser = asyncWrapper(async (req, res) => {
     },
   });
 
+
+
   // sending the res and staus code along with token using sendJWtToken method
   sendJWtToken(user, 201, res);
 });
+
+function isValidBase64(str) {
+  try {
+    return Buffer.from(str, 'base64').toString('base64') === str;
+  } catch (error) {
+    return false;
+  }
+}
 
 // Login User >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 exports.loginUser = asyncWrapper(async (req, res, next) => {
@@ -211,11 +227,12 @@ exports.updateProfile = asyncWrapper(async (req, res, next) => {
   if (req.body.avatar !== "") {
     const user = await userModel.findById(req.user.id);
     const imageId = user.avatar.public_id;
+    const base64Data = req.body.avatar.replace(/^data:image\/jpeg;base64,/, '');
 
     //  await cloudinary.v2.uploader.destroy(imageId); // delete old Image from cloudnairy
     await cloudinary.v2.uploader.destroy(imageId);
 
-    const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+    const myCloud = await cloudinary.v2.uploader.upload(base64Data, {
       folder: "Avatar", // this folder cloudainry data base manage by us
       width: 150,
       crop: "scale",
